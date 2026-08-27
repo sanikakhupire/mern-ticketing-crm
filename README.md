@@ -21,9 +21,9 @@ patterns: JWT authentication, real-time notifications, file uploads, analytics, 
 
 ## Project Roadmap
 
-- [ ] Phase 0 — GitHub Setup
-- [ ] Phase 1 — Project Setup (client + server scaffolding)
-- [ ] Phase 2 — Authentication & Role-Based Access
+- [x] Phase 0 — GitHub Setup
+- [x] Phase 1 — Project Setup (client + server scaffolding)
+- [x] Phase 2 — Authentication & Role-Based Access
 - [ ] Phase 3 — Ticket Management (CRUD)
 - [ ] Phase 4 — File Uploads (Cloudinary)
 - [ ] Phase 5 — React Frontend & Dashboards
