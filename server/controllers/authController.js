@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 import { generateAccessToken, generateRefreshToken } from '../utils/generateTokens.js'
 
@@ -117,5 +118,33 @@ export const logoutUser = async (req, res) => {
     res.status(200).json({ message: 'Logged out successfully' })
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message })
+  }
+}
+
+// @desc   Refresh access token using refresh token cookie
+// @route  POST /api/auth/refresh
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'No refresh token provided' })
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET)
+
+    const user = await User.findById(decoded.id)
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({ message: 'Invalid refresh token' })
+    }
+
+    const newAccessToken = generateAccessToken(user._id, user.role)
+
+    res.status(200).json({ accessToken: newAccessToken })
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(403).json({ message: 'Refresh token expired, please log in again' })
+    }
+    return res.status(403).json({ message: 'Invalid refresh token' })
   }
 }
