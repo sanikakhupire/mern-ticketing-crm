@@ -11,6 +11,7 @@ import authRoutes from './routes/authRoutes.js'
 import ticketRoutes from './routes/ticketRoutes.js'
 import userRoutes from './routes/userRoutes.js'
 import notificationRoutes from './routes/notificationRoutes.js'
+import analyticsRoutes from './routes/analyticsRoutes.js'
 import { notFound, errorHandler } from './middleware/errorMiddleware.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -42,6 +43,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/tickets', ticketRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/analytics', analyticsRoutes)
 
 // Error handling middleware
 app.use(notFound)
