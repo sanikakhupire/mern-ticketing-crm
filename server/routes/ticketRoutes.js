@@ -1,6 +1,7 @@
 import express from 'express'
 import { protect } from '../middleware/authMiddleware.js'
 import { authorize } from '../middleware/roleMiddleware.js'
+import { uploadTicketImage } from '../middleware/uploadMiddleware.js'
 import {
   createTicket,
   getMyTickets,
@@ -13,8 +14,8 @@ import {
 
 const router = express.Router()
 
-// Customer creates a ticket
-router.post('/', protect, authorize('customer'), createTicket)
+// Customer creates a ticket (supports multipart/form-data with optional image file)
+router.post('/', protect, authorize('customer'), uploadTicketImage, createTicket)
 
 // Customer views their own tickets
 router.get('/my', protect, authorize('customer'), getMyTickets)

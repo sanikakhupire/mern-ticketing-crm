@@ -25,7 +25,7 @@ patterns: JWT authentication, real-time notifications, file uploads, analytics, 
 - [x] Phase 1 — Project Setup (client + server scaffolding)
 - [x] Phase 2 — Authentication & Role-Based Access
 - [x] Phase 3 — Ticket Management (CRUD)
-- [ ] Phase 4 — File Uploads (Cloudinary)
+- [x] Phase 4 — File Uploads (Cloudinary)
 - [ ] Phase 5 — React Frontend & Dashboards
 - [ ] Phase 6 — Real-Time Notifications (Socket.io)
 - [ ] Phase 7 — Analytics & Reporting Dashboards
