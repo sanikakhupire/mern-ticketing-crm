@@ -1,5 +1,6 @@
 import Ticket from '../models/Ticket.js'
 import User from '../models/User.js'
+import { uploadToCloudinary } from '../config/cloudinary.js'
 
 // @desc   Customer creates a new ticket
 // @route  POST /api/tickets
@@ -12,11 +13,24 @@ export const createTicket = async (req, res, next) => {
       return res.status(400).json({ message: 'Subject and description are required' })
     }
 
+    let imageUrl = req.body.imageUrl || null
+
+    // If an image was uploaded via multipart/form-data
+    if (req.file) {
+      try {
+        const uploadResult = await uploadToCloudinary(req.file.buffer, 'mern-ticketing-crm/tickets')
+        imageUrl = uploadResult.secure_url
+      } catch (uploadError) {
+        return res.status(500).json({ message: 'Image upload failed', error: uploadError.message })
+      }
+    }
+
     const ticket = await Ticket.create({
       subject,
       description,
       category,
       priority,
+      imageUrl,
       customer: req.user._id,
     })
 
