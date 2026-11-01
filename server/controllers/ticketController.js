@@ -1,6 +1,8 @@
 import Ticket from '../models/Ticket.js'
 import User from '../models/User.js'
+import Notification from '../models/Notification.js'
 import { uploadToCloudinary } from '../config/cloudinary.js'
+import { emitNotification } from '../config/socket.js'
 
 // @desc   Customer creates a new ticket
 // @route  POST /api/tickets
@@ -113,6 +115,21 @@ export const assignTicket = async (req, res, next) => {
     ticket.status = 'Running'
     await ticket.save()
 
+    // Persist and emit real-time notification to assigned employee
+    try {
+      const notification = await Notification.create({
+        recipient: employeeId,
+        sender: req.user._id,
+        ticket: ticket._id,
+        type: 'TICKET_ASSIGNED',
+        title: 'New Ticket Assigned',
+        message: `You were assigned ticket: "${ticket.subject}"`,
+      })
+      emitNotification(employeeId, notification)
+    } catch (notifError) {
+      console.error('Failed to dispatch notification:', notifError.message)
+    }
+
     const updatedTicket = await Ticket.findById(ticket._id)
       .populate('customer', 'name email')
       .populate('assignedTo', 'name email')
@@ -147,6 +164,21 @@ export const updateTicketStatus = async (req, res, next) => {
 
     ticket.status = status
     await ticket.save()
+
+    // Persist and emit real-time notification to ticket customer
+    try {
+      const notification = await Notification.create({
+        recipient: ticket.customer,
+        sender: req.user._id,
+        ticket: ticket._id,
+        type: 'STATUS_CHANGED',
+        title: 'Ticket Status Updated',
+        message: `Your ticket "${ticket.subject}" is now ${status}`,
+      })
+      emitNotification(ticket.customer, notification)
+    } catch (notifError) {
+      console.error('Failed to dispatch status notification:', notifError.message)
+    }
 
     const updatedTicket = await Ticket.findById(ticket._id)
       .populate('customer', 'name email')

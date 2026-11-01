@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import NotificationBell from './NotificationBell.jsx'
 import {
   Ticket,
   Users,
   LayoutDashboard,
   LogOut,
-  User as UserIcon,
   Menu,
   X,
-  PlusCircle,
 } from 'lucide-react'
 
 const Navbar = () => {
@@ -83,8 +82,11 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* User Profile & Actions */}
+          {/* User Profile, Notifications & Actions */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Real-time Notification Bell */}
+            <NotificationBell />
+
             {user && (
               <div className="flex items-center gap-3 pr-2 border-r border-slate-200 dark:border-slate-800">
                 <div className="text-right">
@@ -103,7 +105,7 @@ const Navbar = () => {
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 rounded-lg transition"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/30 rounded-lg transition cursor-pointer"
               title="Logout"
             >
               <LogOut size={16} />
@@ -111,11 +113,12 @@ const Navbar = () => {
             </button>
           </div>
 
-          {/* Mobile menu button */}
+          {/* Mobile menu and notifications */}
           <div className="flex md:hidden items-center gap-2">
+            <NotificationBell />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -164,7 +167,7 @@ const Navbar = () => {
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition"
+            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition cursor-pointer"
           >
             <LogOut size={16} />
             <span>Logout</span>
