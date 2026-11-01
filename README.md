@@ -27,7 +27,7 @@ patterns: JWT authentication, real-time notifications, file uploads, analytics, 
 - [x] Phase 3 — Ticket Management (CRUD)
 - [x] Phase 4 — File Uploads (Cloudinary)
 - [x] Phase 5 — React Frontend & Dashboards
-- [ ] Phase 6 — Real-Time Notifications (Socket.io)
+- [x] Phase 6 — Real-Time Notifications (Socket.io)
 - [ ] Phase 7 — Analytics & Reporting Dashboards
 - [ ] Phase 8 — Search, Filter & Pagination
 - [ ] Phase 9 — Advanced Features (SLA tracking, AI triage, audit logs, chat, exports)
