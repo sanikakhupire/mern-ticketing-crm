@@ -1,43 +1,65 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import toast from 'react-hot-toast'
 import {
   Ticket,
   Clock,
   CheckCircle2,
   PauseCircle,
-  AlertCircle,
   Image as ImageIcon,
   Calendar,
   User,
-  ChevronDown,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
+import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
+import Pagination from '../../components/Pagination.jsx'
 
 const EmployeeDashboard = () => {
   const [tickets, setTickets] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 })
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
   const [viewImage, setViewImage] = useState(null)
-  const [activeTab, setActiveTab] = useState('All')
 
-  const fetchAssignedTickets = async () => {
+  // Filters
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('All')
+  const [category, setCategory] = useState('All')
+  const [priority, setPriority] = useState('All')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+
+  const fetchAssignedTickets = useCallback(async () => {
     try {
       setLoading(true)
-      const { data } = await api.get('/tickets/assigned')
-      setTickets(data)
+      const params = {
+        page,
+        limit,
+        search: search.trim() || undefined,
+        status: status !== 'All' ? status : undefined,
+        category: category !== 'All' ? category : undefined,
+        priority: priority !== 'All' ? priority : undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      }
+
+      const { data } = await api.get('/tickets/assigned', { params })
+      setTickets(data.tickets || [])
+      setPagination(data.pagination || { page: 1, limit: 10, total: 0, pages: 1 })
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to load assigned tickets')
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, limit, search, status, category, priority, dateFrom, dateTo])
 
   useEffect(() => {
     fetchAssignedTickets()
-  }, [])
+  }, [fetchAssignedTickets])
 
   const handleStatusChange = async (ticketId, newStatus) => {
     try {
@@ -54,13 +76,17 @@ const EmployeeDashboard = () => {
     }
   }
 
-  // Filter tabs
-  const filteredTickets =
-    activeTab === 'All'
-      ? tickets
-      : tickets.filter((t) => t.status === activeTab)
+  const handleResetFilters = () => {
+    setSearch('')
+    setStatus('All')
+    setCategory('All')
+    setPriority('All')
+    setDateFrom('')
+    setDateTo('')
+    setPage(1)
+  }
 
-  const totalAssigned = tickets.length
+  const totalAssigned = pagination.total
   const runningCount = tickets.filter((t) => t.status === 'Running').length
   const onHoldCount = tickets.filter((t) => t.status === 'On Hold').length
   const completedCount = tickets.filter((t) => t.status === 'Completed').length
@@ -76,7 +102,7 @@ const EmployeeDashboard = () => {
             Employee Workspace
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Manage your assigned support queue and update resolution statuses.
+            Search, filter, and update resolution statuses for your assigned ticket queue.
           </p>
         </div>
 
@@ -123,24 +149,42 @@ const EmployeeDashboard = () => {
           </div>
         </div>
 
-        {/* Tabs & Table */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-          {/* Status Tabs */}
-          <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 overflow-x-auto">
-            {['All', 'Open', 'Running', 'On Hold', 'Completed'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer shrink-0 ${
-                  activeTab === tab
-                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
-                    : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+        {/* Tickets Panel */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col">
+          {/* Filter Toolbar */}
+          <TicketFilterToolbar
+            search={search}
+            onSearchChange={(v) => {
+              setSearch(v)
+              setPage(1)
+            }}
+            status={status}
+            onStatusChange={(v) => {
+              setStatus(v)
+              setPage(1)
+            }}
+            category={category}
+            onCategoryChange={(v) => {
+              setCategory(v)
+              setPage(1)
+            }}
+            priority={priority}
+            onPriorityChange={(v) => {
+              setPriority(v)
+              setPage(1)
+            }}
+            dateFrom={dateFrom}
+            onDateFromChange={(v) => {
+              setDateFrom(v)
+              setPage(1)
+            }}
+            dateTo={dateTo}
+            onDateToChange={(v) => {
+              setDateTo(v)
+              setPage(1)
+            }}
+            onResetFilters={handleResetFilters}
+          />
 
           {loading ? (
             <div className="p-8 space-y-4">
@@ -151,19 +195,19 @@ const EmployeeDashboard = () => {
                 </div>
               ))}
             </div>
-          ) : filteredTickets.length === 0 ? (
+          ) : tickets.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 size={24} />
               </div>
               <h3 className="text-base font-medium text-slate-800 dark:text-slate-200">No tickets found</h3>
               <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-                No tickets currently match the selected status filter.
+                No tickets currently match the selected search or filter parameters.
               </p>
             </div>
           ) : (
             <div className="divide-y divide-slate-200 dark:divide-slate-800">
-              {filteredTickets.map((ticket) => (
+              {tickets.map((ticket) => (
                 <div
                   key={ticket._id}
                   className="p-5 sm:p-6 hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
@@ -231,6 +275,16 @@ const EmployeeDashboard = () => {
               ))}
             </div>
           )}
+
+          {/* Pagination */}
+          <Pagination
+            pagination={pagination}
+            onPageChange={(p) => setPage(p)}
+            onLimitChange={(l) => {
+              setLimit(l)
+              setPage(1)
+            }}
+          />
         </div>
       </main>
 

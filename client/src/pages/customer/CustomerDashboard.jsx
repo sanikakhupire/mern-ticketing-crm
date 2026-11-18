@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -19,6 +19,8 @@ import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
+import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
+import Pagination from '../../components/Pagination.jsx'
 
 const ticketSchema = z.object({
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
@@ -29,12 +31,23 @@ const ticketSchema = z.object({
 
 const CustomerDashboard = () => {
   const [tickets, setTickets] = useState([])
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 1 })
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [viewImage, setViewImage] = useState(null)
+
+  // Filters
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('All')
+  const [category, setCategory] = useState('All')
+  const [priority, setPriority] = useState('All')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
 
   const {
     register,
@@ -51,21 +64,33 @@ const CustomerDashboard = () => {
     },
   })
 
-  const fetchMyTickets = async () => {
+  const fetchMyTickets = useCallback(async () => {
     try {
       setLoading(true)
-      const { data } = await api.get('/tickets/my')
-      setTickets(data)
+      const params = {
+        page,
+        limit,
+        search: search.trim() || undefined,
+        status: status !== 'All' ? status : undefined,
+        category: category !== 'All' ? category : undefined,
+        priority: priority !== 'All' ? priority : undefined,
+        dateFrom: dateFrom || undefined,
+        dateTo: dateTo || undefined,
+      }
+
+      const { data } = await api.get('/tickets/my', { params })
+      setTickets(data.tickets || [])
+      setPagination(data.pagination || { page: 1, limit: 10, total: 0, pages: 1 })
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to fetch tickets')
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, limit, search, status, category, priority, dateFrom, dateTo])
 
   useEffect(() => {
     fetchMyTickets()
-  }, [])
+  }, [fetchMyTickets])
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -110,10 +135,11 @@ const CustomerDashboard = () => {
       })
 
       toast.success('Ticket created successfully!')
-      setTickets([data, ...tickets])
+      setTickets((prev) => [data, ...prev])
       reset()
       removeFile()
       setModalOpen(false)
+      fetchMyTickets()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create ticket')
     } finally {
@@ -121,11 +147,15 @@ const CustomerDashboard = () => {
     }
   }
 
-  // Calculate statistics
-  const totalCount = tickets.length
-  const openCount = tickets.filter((t) => t.status === 'Open').length
-  const runningCount = tickets.filter((t) => t.status === 'Running').length
-  const completedCount = tickets.filter((t) => t.status === 'Completed').length
+  const handleResetFilters = () => {
+    setSearch('')
+    setStatus('All')
+    setCategory('All')
+    setPriority('All')
+    setDateFrom('')
+    setDateTo('')
+    setPage(1)
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
@@ -139,7 +169,7 @@ const CustomerDashboard = () => {
               Customer Support Portal
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Create tickets and track their resolution progress in real time.
+              Search your inquiries, track progress in real time, or file a new issue.
             </p>
           </div>
 
@@ -152,55 +182,42 @@ const CustomerDashboard = () => {
           </button>
         </div>
 
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-500">Total Tickets</span>
-              <div className="p-2 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 rounded-lg">
-                <Ticket size={18} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{totalCount}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-500">Open</span>
-              <div className="p-2 bg-amber-50 dark:bg-amber-950/40 text-amber-600 rounded-lg">
-                <AlertCircle size={18} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{openCount}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-500">In Progress</span>
-              <div className="p-2 bg-blue-50 dark:bg-blue-950/40 text-blue-600 rounded-lg">
-                <Clock size={18} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{runningCount}</p>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-500">Resolved</span>
-              <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 rounded-lg">
-                <CheckCircle2 size={18} />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">{completedCount}</p>
-          </div>
-        </div>
-
-        {/* Tickets List */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">My Support Tickets</h2>
-            <span className="text-xs text-slate-500">{tickets.length} total</span>
-          </div>
+        {/* Tickets List Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden flex flex-col">
+          {/* Filters Toolbar */}
+          <TicketFilterToolbar
+            search={search}
+            onSearchChange={(v) => {
+              setSearch(v)
+              setPage(1)
+            }}
+            status={status}
+            onStatusChange={(v) => {
+              setStatus(v)
+              setPage(1)
+            }}
+            category={category}
+            onCategoryChange={(v) => {
+              setCategory(v)
+              setPage(1)
+            }}
+            priority={priority}
+            onPriorityChange={(v) => {
+              setPriority(v)
+              setPage(1)
+            }}
+            dateFrom={dateFrom}
+            onDateFromChange={(v) => {
+              setDateFrom(v)
+              setPage(1)
+            }}
+            dateTo={dateTo}
+            onDateToChange={(v) => {
+              setDateTo(v)
+              setPage(1)
+            }}
+            onResetFilters={handleResetFilters}
+          />
 
           {loading ? (
             <div className="p-8 space-y-4">
@@ -218,7 +235,7 @@ const CustomerDashboard = () => {
               </div>
               <h3 className="text-base font-medium text-slate-800 dark:text-slate-200">No support tickets found</h3>
               <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto">
-                Need help with something? Click the button above to submit your first ticket.
+                No tickets match your query. Click "Create New Ticket" to file a new inquiry.
               </p>
             </div>
           ) : (
@@ -280,6 +297,16 @@ const CustomerDashboard = () => {
               ))}
             </div>
           )}
+
+          {/* Pagination */}
+          <Pagination
+            pagination={pagination}
+            onPageChange={(p) => setPage(p)}
+            onLimitChange={(l) => {
+              setLimit(l)
+              setPage(1)
+            }}
+          />
         </div>
       </main>
 
@@ -298,7 +325,7 @@ const CustomerDashboard = () => {
                   removeFile()
                   reset()
                 }}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -400,7 +427,7 @@ const CustomerDashboard = () => {
                     <button
                       type="button"
                       onClick={removeFile}
-                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md transition"
+                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-md transition cursor-pointer"
                     >
                       <X size={16} />
                     </button>
@@ -431,7 +458,7 @@ const CustomerDashboard = () => {
                     removeFile()
                     reset()
                   }}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"
                 >
                   Cancel
                 </button>
