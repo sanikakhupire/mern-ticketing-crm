@@ -6,6 +6,7 @@ import {
   Ticket,
   Users,
   LayoutDashboard,
+  BarChart3,
   LogOut,
   Menu,
   X,
@@ -31,6 +32,7 @@ const Navbar = () => {
   const navLinks = {
     admin: [
       { to: '/admin', label: 'All Tickets', icon: LayoutDashboard },
+      { to: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
       { to: '/admin/users', label: 'User Management', icon: Users },
     ],
     employee: [
@@ -84,7 +86,6 @@ const Navbar = () => {
 
           {/* User Profile, Notifications & Actions */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Real-time Notification Bell */}
             <NotificationBell />
 
             {user && (

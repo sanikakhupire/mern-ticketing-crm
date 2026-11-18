@@ -8,6 +8,7 @@ import Register from './pages/auth/Register.jsx'
 import CustomerDashboard from './pages/customer/CustomerDashboard.jsx'
 import EmployeeDashboard from './pages/employee/EmployeeDashboard.jsx'
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
+import AnalyticsDashboard from './pages/admin/AnalyticsDashboard.jsx'
 import UserManagement from './pages/admin/UserManagement.jsx'
 import NotFound from './pages/NotFound.jsx'
 
@@ -68,6 +69,7 @@ function App() {
             {/* Admin Routes */}
             <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/analytics" element={<AnalyticsDashboard />} />
               <Route path="/admin/users" element={<UserManagement />} />
             </Route>
 
