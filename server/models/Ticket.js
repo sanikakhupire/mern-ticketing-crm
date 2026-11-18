@@ -45,6 +45,15 @@ const ticketSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
+// Search text index for full-text search across subject and description
+ticketSchema.index({ subject: 'text', description: 'text' })
+
+// Query optimization compound indexes
+ticketSchema.index({ status: 1, createdAt: -1 })
+ticketSchema.index({ customer: 1, createdAt: -1 })
+ticketSchema.index({ assignedTo: 1, status: 1 })
+ticketSchema.index({ category: 1, priority: 1 })
+
 const Ticket = mongoose.model('Ticket', ticketSchema)
 
 export default Ticket
