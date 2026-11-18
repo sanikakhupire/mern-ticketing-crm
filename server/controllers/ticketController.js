@@ -4,6 +4,60 @@ import Notification from '../models/Notification.js'
 import { uploadToCloudinary } from '../config/cloudinary.js'
 import { emitNotification } from '../config/socket.js'
 
+/**
+ * Helper to construct MongoDB filter based on query parameters
+ */
+const buildTicketFilter = (query, baseFilter = {}) => {
+  const filter = { ...baseFilter }
+
+  // 1. Full-text / substring search across subject and description
+  if (query.search && query.search.trim()) {
+    const term = query.search.trim()
+    const regex = new RegExp(term, 'i')
+    filter.$or = [{ subject: regex }, { description: regex }]
+  }
+
+  // 2. Status filter
+  if (query.status && query.status !== 'All') {
+    filter.status = query.status
+  }
+
+  // 3. Category filter
+  if (query.category && query.category !== 'All') {
+    filter.category = query.category
+  }
+
+  // 4. Priority filter
+  if (query.priority && query.priority !== 'All') {
+    filter.priority = query.priority
+  }
+
+  // 5. Customer filter
+  if (query.customer) {
+    filter.customer = query.customer
+  }
+
+  // 6. Assigned employee filter
+  if (query.assignedTo) {
+    filter.assignedTo = query.assignedTo === 'unassigned' ? null : query.assignedTo
+  }
+
+  // 7. Date range filter
+  if (query.dateFrom || query.dateTo) {
+    filter.createdAt = {}
+    if (query.dateFrom) {
+      filter.createdAt.$gte = new Date(query.dateFrom)
+    }
+    if (query.dateTo) {
+      const end = new Date(query.dateTo)
+      end.setHours(23, 59, 59, 999)
+      filter.createdAt.$lte = end
+    }
+  }
+
+  return filter
+}
+
 // @desc   Customer creates a new ticket
 // @route  POST /api/tickets
 // @access Private (customer)
@@ -44,47 +98,95 @@ export const createTicket = async (req, res, next) => {
   }
 }
 
-// @desc   Customer views their own tickets
+// @desc   Customer views their own tickets (with search, filters & pagination)
 // @route  GET /api/tickets/my
 // @access Private (customer)
 export const getMyTickets = async (req, res, next) => {
   try {
-    const tickets = await Ticket.find({ customer: req.user._id })
+    const filter = buildTicketFilter(req.query, { customer: req.user._id })
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit) || 10))
+    const skip = (page - 1) * limit
+
+    const total = await Ticket.countDocuments(filter)
+    const tickets = await Ticket.find(filter)
       .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    res.status(200).json(tickets)
+    res.status(200).json({
+      tickets,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit) || 1,
+      },
+    })
   } catch (error) {
     next(error)
   }
 }
 
-// @desc   Admin views all tickets
+// @desc   Admin views all tickets (with search, filters & pagination)
 // @route  GET /api/tickets
 // @access Private (admin)
 export const getAllTickets = async (req, res, next) => {
   try {
-    const tickets = await Ticket.find()
+    const filter = buildTicketFilter(req.query)
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit) || 10))
+    const skip = (page - 1) * limit
+
+    const total = await Ticket.countDocuments(filter)
+    const tickets = await Ticket.find(filter)
       .populate('customer', 'name email')
       .populate('assignedTo', 'name email')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    res.status(200).json(tickets)
+    res.status(200).json({
+      tickets,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit) || 1,
+      },
+    })
   } catch (error) {
     next(error)
   }
 }
 
-// @desc   Employee views tickets assigned to them
+// @desc   Employee views tickets assigned to them (with search, filters & pagination)
 // @route  GET /api/tickets/assigned
 // @access Private (employee)
 export const getAssignedTickets = async (req, res, next) => {
   try {
-    const tickets = await Ticket.find({ assignedTo: req.user._id })
+    const filter = buildTicketFilter(req.query, { assignedTo: req.user._id })
+    const page = Math.max(1, parseInt(req.query.page) || 1)
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit) || 10))
+    const skip = (page - 1) * limit
+
+    const total = await Ticket.countDocuments(filter)
+    const tickets = await Ticket.find(filter)
       .populate('customer', 'name email')
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
-    res.status(200).json(tickets)
+    res.status(200).json({
+      tickets,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit) || 1,
+      },
+    })
   } catch (error) {
     next(error)
   }
