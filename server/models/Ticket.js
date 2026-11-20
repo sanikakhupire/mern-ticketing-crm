@@ -41,9 +41,36 @@ const ticketSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    // SLA tracking and auto-escalation fields
+    slaDeadline: {
+      type: Date,
+      default: null,
+    },
+    slaBreached: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    escalated: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 )
+
+// Calculate SLA deadline based on priority if not already set
+ticketSchema.pre('save', function () {
+  if (this.isNew && !this.slaDeadline) {
+    const slaHoursMap = {
+      High: 4,
+      Medium: 24,
+      Low: 48,
+    }
+    const hours = slaHoursMap[this.priority] || 48
+    this.slaDeadline = new Date(Date.now() + hours * 60 * 60 * 1000)
+  }
+})
 
 // Search text index for full-text search across subject and description
 ticketSchema.index({ subject: 'text', description: 'text' })
@@ -53,6 +80,7 @@ ticketSchema.index({ status: 1, createdAt: -1 })
 ticketSchema.index({ customer: 1, createdAt: -1 })
 ticketSchema.index({ assignedTo: 1, status: 1 })
 ticketSchema.index({ category: 1, priority: 1 })
+ticketSchema.index({ slaDeadline: 1, slaBreached: 1, status: 1 })
 
 const Ticket = mongoose.model('Ticket', ticketSchema)
 

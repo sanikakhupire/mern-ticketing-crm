@@ -13,7 +13,7 @@ import {
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
-import { StatusBadge, PriorityBadge, CategoryBadge } from '../../components/TicketBadges.jsx'
+import { StatusBadge, PriorityBadge, CategoryBadge, SlaBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
@@ -251,6 +251,7 @@ const AdminDashboard = () => {
                       <StatusBadge status={ticket.status} />
                       <PriorityBadge priority={ticket.priority} />
                       <CategoryBadge category={ticket.category} />
+                      <SlaBadge ticket={ticket} />
                     </div>
 
                     <h3 className="text-base font-semibold text-slate-900 dark:text-white">

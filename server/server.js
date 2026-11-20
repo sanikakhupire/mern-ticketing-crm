@@ -7,6 +7,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import connectDB from './config/db.js'
 import { initSocket } from './config/socket.js'
+import { startSlaCron } from './utils/slaCron.js'
 import authRoutes from './routes/authRoutes.js'
 import ticketRoutes from './routes/ticketRoutes.js'
 import userRoutes from './routes/userRoutes.js'
@@ -17,6 +18,9 @@ import { notFound, errorHandler } from './middleware/errorMiddleware.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: path.resolve(__dirname, '.env') })
 connectDB()
+
+// Start background SLA monitoring and auto-escalation cron worker
+startSlaCron()
 
 const app = express()
 const server = http.createServer(app)
