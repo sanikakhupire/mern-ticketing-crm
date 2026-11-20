@@ -3,6 +3,7 @@ import Ticket from '../models/Ticket.js'
 import User from '../models/User.js'
 import Notification from '../models/Notification.js'
 import { emitNotification } from '../config/socket.js'
+import { recordAuditLog } from './auditLogger.js'
 
 /**
  * Check for overdue tickets past their SLA resolution deadline and auto-escalate
@@ -41,6 +42,20 @@ export const checkSlaAndEscalate = async () => {
       }
 
       await ticket.save()
+
+      // Record audit log for automated SLA escalation
+      await recordAuditLog({
+        ticketId: ticket._id,
+        action: 'ESCALATED',
+        performedBy: null,
+        performedByName: 'System (SLA Monitor)',
+        performedByRole: 'system',
+        changes: [
+          { field: 'priority', oldValue: oldPriority, newValue: ticket.priority },
+          { field: 'slaBreached', oldValue: false, newValue: true },
+        ],
+        note: `Auto-escalated priority from ${oldPriority} to ${ticket.priority} due to SLA resolution breach`,
+      })
 
       const escalationMessage = `Ticket "${ticket.subject}" breached its resolution deadline and was auto-escalated from ${oldPriority} to ${ticket.priority}.`
 

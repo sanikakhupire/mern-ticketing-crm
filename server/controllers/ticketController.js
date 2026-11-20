@@ -1,6 +1,8 @@
 import Ticket from '../models/Ticket.js'
 import User from '../models/User.js'
 import Notification from '../models/Notification.js'
+import AuditLog from '../models/AuditLog.js'
+import { recordAuditLog } from '../utils/auditLogger.js'
 import { uploadToCloudinary } from '../config/cloudinary.js'
 import { emitNotification } from '../config/socket.js'
 
@@ -91,6 +93,21 @@ export const createTicket = async (req, res, next) => {
     })
 
     const populatedTicket = await ticket.populate('customer', 'name email')
+
+    // Record audit log for ticket creation
+    await recordAuditLog({
+      ticketId: ticket._id,
+      action: 'CREATED',
+      performedBy: req.user._id,
+      performedByName: req.user.name,
+      performedByRole: req.user.role || 'customer',
+      changes: [
+        { field: 'status', oldValue: null, newValue: ticket.status },
+        { field: 'priority', oldValue: null, newValue: ticket.priority },
+        { field: 'category', oldValue: null, newValue: ticket.category },
+      ],
+      note: 'Ticket created',
+    })
 
     res.status(201).json(populatedTicket)
   } catch (error) {
@@ -213,9 +230,34 @@ export const assignTicket = async (req, res, next) => {
       return res.status(404).json({ message: 'Ticket not found' })
     }
 
+    const oldAssignedUser = ticket.assignedTo
+      ? await User.findById(ticket.assignedTo).select('name')
+      : null
+    const oldStatus = ticket.status
+
     ticket.assignedTo = employeeId
     ticket.status = 'Running'
     await ticket.save()
+
+    // Record audit log for ticket assignment
+    await recordAuditLog({
+      ticketId: ticket._id,
+      action: 'ASSIGNED',
+      performedBy: req.user._id,
+      performedByName: req.user.name,
+      performedByRole: req.user.role || 'admin',
+      changes: [
+        {
+          field: 'assignedTo',
+          oldValue: oldAssignedUser?.name || 'Unassigned',
+          newValue: employee.name,
+        },
+        ...(oldStatus !== 'Running'
+          ? [{ field: 'status', oldValue: oldStatus, newValue: 'Running' }]
+          : []),
+      ],
+      note: `Assigned to ${employee.name}`,
+    })
 
     // Persist and emit real-time notification to assigned employee
     try {
@@ -264,8 +306,20 @@ export const updateTicketStatus = async (req, res, next) => {
       return res.status(403).json({ message: 'You are not assigned to this ticket' })
     }
 
+    const oldStatus = ticket.status
     ticket.status = status
     await ticket.save()
+
+    // Record audit log for status update
+    await recordAuditLog({
+      ticketId: ticket._id,
+      action: 'STATUS_UPDATED',
+      performedBy: req.user._id,
+      performedByName: req.user.name,
+      performedByRole: req.user.role,
+      changes: [{ field: 'status', oldValue: oldStatus, newValue: status }],
+      note: `Status changed from ${oldStatus} to ${status}`,
+    })
 
     // Persist and emit real-time notification to ticket customer
     try {
@@ -314,6 +368,38 @@ export const getTicketById = async (req, res, next) => {
     }
 
     res.status(200).json(ticket)
+  } catch (error) {
+    next(error)
+  }
+}
+
+// @desc   Get audit logs for a specific ticket
+// @route  GET /api/tickets/:id/audit-logs
+// @access Private (owner customer, assigned employee, admin)
+export const getTicketAuditLogs = async (req, res, next) => {
+  try {
+    const ticket = await Ticket.findById(req.params.id)
+    if (!ticket) {
+      return res.status(404).json({ message: 'Ticket not found' })
+    }
+
+    const isOwner = String(ticket.customer?._id || ticket.customer) === String(req.user._id)
+    const isAssigned =
+      ticket.assignedTo &&
+      String(ticket.assignedTo?._id || ticket.assignedTo) === String(req.user._id)
+    const isAdmin = req.user.role === 'admin'
+
+    if (!isOwner && !isAssigned && !isAdmin) {
+      return res
+        .status(403)
+        .json({ message: 'Not authorized to view audit logs for this ticket' })
+    }
+
+    const logs = await AuditLog.find({ ticket: ticket._id })
+      .populate('performedBy', 'name email role')
+      .sort({ createdAt: -1 })
+
+    res.status(200).json(logs)
   } catch (error) {
     next(error)
   }

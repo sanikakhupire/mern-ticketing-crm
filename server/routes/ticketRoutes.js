@@ -10,6 +10,7 @@ import {
   assignTicket,
   updateTicketStatus,
   getTicketById,
+  getTicketAuditLogs,
 } from '../controllers/ticketController.js'
 
 const router = express.Router()
@@ -31,6 +32,9 @@ router.patch('/:id/assign', protect, authorize('admin'), assignTicket)
 
 // Employee or admin updates ticket status
 router.patch('/:id/status', protect, authorize('employee', 'admin'), updateTicketStatus)
+
+// Audit logs for a ticket (access checked in controller)
+router.get('/:id/audit-logs', protect, getTicketAuditLogs)
 
 // Get single ticket (access checked inside controller)
 router.get('/:id', protect, getTicketById)
