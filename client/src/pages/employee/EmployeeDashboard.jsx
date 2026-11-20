@@ -8,11 +8,13 @@ import {
   Image as ImageIcon,
   Calendar,
   User,
+  History,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge, SlaBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
+import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
 
@@ -22,6 +24,7 @@ const EmployeeDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
   const [viewImage, setViewImage] = useState(null)
+  const [auditTicket, setAuditTicket] = useState(null)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -257,6 +260,17 @@ const EmployeeDashboard = () => {
                       </button>
                     )}
 
+                    {/* Audit History Button */}
+                    <button
+                      type="button"
+                      onClick={() => setAuditTicket(ticket)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                      title="View ticket audit history"
+                    >
+                      <History size={14} className="text-indigo-600" />
+                      <span>History</span>
+                    </button>
+
                     {/* Status Changer Dropdown */}
                     <div className="relative">
                       <select
@@ -290,6 +304,7 @@ const EmployeeDashboard = () => {
       </main>
 
       <ImageModal imageUrl={viewImage} onClose={() => setViewImage(null)} />
+      <TicketAuditHistoryModal ticket={auditTicket} onClose={() => setAuditTicket(null)} />
     </div>
   )
 }

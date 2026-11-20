@@ -10,11 +10,13 @@ import {
   Image as ImageIcon,
   Calendar,
   User,
+  History,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge, SlaBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
+import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
 
@@ -25,6 +27,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [assigningId, setAssigningId] = useState(null)
   const [viewImage, setViewImage] = useState(null)
+  const [auditTicket, setAuditTicket] = useState(null)
 
   // Filter states
   const [search, setSearch] = useState('')
@@ -289,6 +292,17 @@ const AdminDashboard = () => {
                       </button>
                     )}
 
+                    {/* Audit History Button */}
+                    <button
+                      type="button"
+                      onClick={() => setAuditTicket(ticket)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                      title="View ticket audit history"
+                    >
+                      <History size={14} className="text-indigo-600" />
+                      <span>History</span>
+                    </button>
+
                     {/* Employee Assignment Dropdown */}
                     <div className="flex items-center gap-2">
                       <label className="text-xs font-medium text-slate-500 whitespace-nowrap">
@@ -327,6 +341,7 @@ const AdminDashboard = () => {
       </main>
 
       <ImageModal imageUrl={viewImage} onClose={() => setViewImage(null)} />
+      <TicketAuditHistoryModal ticket={auditTicket} onClose={() => setAuditTicket(null)} />
     </div>
   )
 }

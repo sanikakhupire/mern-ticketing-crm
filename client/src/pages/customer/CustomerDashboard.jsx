@@ -14,11 +14,13 @@ import {
   Upload,
   Calendar,
   User,
+  History,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge, SlaBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
+import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
 
@@ -38,6 +40,7 @@ const CustomerDashboard = () => {
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [viewImage, setViewImage] = useState(null)
+  const [auditTicket, setAuditTicket] = useState(null)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -282,8 +285,8 @@ const CustomerDashboard = () => {
                     </div>
                   </div>
 
-                  {ticket.imageUrl && (
-                    <div className="flex items-center gap-2 self-start lg:self-center">
+                  <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
+                    {ticket.imageUrl && (
                       <button
                         type="button"
                         onClick={() => setViewImage(ticket.imageUrl)}
@@ -292,8 +295,18 @@ const CustomerDashboard = () => {
                         <ImageIcon size={15} className="text-indigo-600" />
                         <span>View Attachment</span>
                       </button>
-                    </div>
-                  )}
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setAuditTicket(ticket)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                      title="View ticket audit history"
+                    >
+                      <History size={14} className="text-indigo-600" />
+                      <span>History</span>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -481,6 +494,7 @@ const CustomerDashboard = () => {
 
       {/* Image Full Size Modal */}
       <ImageModal imageUrl={viewImage} onClose={() => setViewImage(null)} />
+      <TicketAuditHistoryModal ticket={auditTicket} onClose={() => setAuditTicket(null)} />
     </div>
   )
 }
