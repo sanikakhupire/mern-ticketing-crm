@@ -15,12 +15,14 @@ import {
   Calendar,
   User,
   History,
+  MessageSquare,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge, SlaBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
 import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.jsx'
+import TicketChatModal from '../../components/TicketChatModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
 
@@ -41,6 +43,7 @@ const CustomerDashboard = () => {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [viewImage, setViewImage] = useState(null)
   const [auditTicket, setAuditTicket] = useState(null)
+  const [chatTicket, setChatTicket] = useState(null)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -306,6 +309,16 @@ const CustomerDashboard = () => {
                       <History size={14} className="text-indigo-600" />
                       <span>History</span>
                     </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setChatTicket(ticket)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                      title="Open ticket discussion chat"
+                    >
+                      <MessageSquare size={14} className="text-indigo-600" />
+                      <span>Chat</span>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -495,6 +508,7 @@ const CustomerDashboard = () => {
       {/* Image Full Size Modal */}
       <ImageModal imageUrl={viewImage} onClose={() => setViewImage(null)} />
       <TicketAuditHistoryModal ticket={auditTicket} onClose={() => setAuditTicket(null)} />
+      <TicketChatModal ticket={chatTicket} onClose={() => setChatTicket(null)} />
     </div>
   )
 }

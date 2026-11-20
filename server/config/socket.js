@@ -39,6 +39,19 @@ export const initSocket = (httpServer) => {
       socket.join(userRoom)
     }
 
+    // Join / leave specific ticket chat room
+    socket.on('join_ticket', (ticketId) => {
+      if (ticketId) {
+        socket.join(`ticket:${ticketId}`)
+      }
+    })
+
+    socket.on('leave_ticket', (ticketId) => {
+      if (ticketId) {
+        socket.leave(`ticket:${ticketId}`)
+      }
+    })
+
     socket.on('disconnect', () => {
       // Cleanup happens automatically in socket.io
     })
@@ -63,4 +76,15 @@ export const emitNotification = (recipientId, notification) => {
   if (!io) return
   const room = `user:${String(recipientId)}`
   io.to(room).emit('notification', notification)
+}
+
+/**
+ * Emit a real-time message to a specific ticket's room
+ * @param {string} ticketId - Ticket ID
+ * @param {object} message - Message document/object
+ */
+export const emitTicketMessage = (ticketId, message) => {
+  if (!io) return
+  const room = `ticket:${String(ticketId)}`
+  io.to(room).emit('ticket:message', message)
 }

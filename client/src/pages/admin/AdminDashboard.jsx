@@ -11,12 +11,14 @@ import {
   Calendar,
   User,
   History,
+  MessageSquare,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { StatusBadge, PriorityBadge, CategoryBadge, SlaBadge } from '../../components/TicketBadges.jsx'
 import ImageModal from '../../components/ImageModal.jsx'
 import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.jsx'
+import TicketChatModal from '../../components/TicketChatModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
 
@@ -28,6 +30,7 @@ const AdminDashboard = () => {
   const [assigningId, setAssigningId] = useState(null)
   const [viewImage, setViewImage] = useState(null)
   const [auditTicket, setAuditTicket] = useState(null)
+  const [chatTicket, setChatTicket] = useState(null)
 
   // Filter states
   const [search, setSearch] = useState('')
@@ -303,6 +306,17 @@ const AdminDashboard = () => {
                       <span>History</span>
                     </button>
 
+                    {/* Chat Discussion Button */}
+                    <button
+                      type="button"
+                      onClick={() => setChatTicket(ticket)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-400 transition cursor-pointer"
+                      title="Open ticket discussion chat"
+                    >
+                      <MessageSquare size={14} className="text-indigo-600" />
+                      <span>Chat</span>
+                    </button>
+
                     {/* Employee Assignment Dropdown */}
                     <div className="flex items-center gap-2">
                       <label className="text-xs font-medium text-slate-500 whitespace-nowrap">
@@ -342,6 +356,7 @@ const AdminDashboard = () => {
 
       <ImageModal imageUrl={viewImage} onClose={() => setViewImage(null)} />
       <TicketAuditHistoryModal ticket={auditTicket} onClose={() => setAuditTicket(null)} />
+      <TicketChatModal ticket={chatTicket} onClose={() => setChatTicket(null)} />
     </div>
   )
 }

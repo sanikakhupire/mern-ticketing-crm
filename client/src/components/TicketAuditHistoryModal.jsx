@@ -11,6 +11,7 @@ import {
   ArrowRight,
   ShieldAlert,
   Loader2,
+  MessageSquare,
 } from 'lucide-react'
 import api from '../services/api'
 
@@ -50,6 +51,13 @@ const getActionDetails = (action) => {
         icon: AlertTriangle,
         bgColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400',
         borderColor: 'border-amber-200 dark:border-amber-800',
+      }
+    case 'COMMENT_ADDED':
+      return {
+        label: 'Message Sent',
+        icon: MessageSquare,
+        bgColor: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400',
+        borderColor: 'border-indigo-200 dark:border-indigo-800',
       }
     default:
       return {

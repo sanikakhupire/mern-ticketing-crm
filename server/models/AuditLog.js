@@ -28,7 +28,15 @@ const auditLogSchema = new mongoose.Schema(
     },
     action: {
       type: String,
-      enum: ['CREATED', 'STATUS_UPDATED', 'ASSIGNED', 'PRIORITY_UPDATED', 'ESCALATED', 'UPDATED'],
+      enum: [
+        'CREATED',
+        'STATUS_UPDATED',
+        'ASSIGNED',
+        'PRIORITY_UPDATED',
+        'ESCALATED',
+        'UPDATED',
+        'COMMENT_ADDED',
+      ],
       required: true,
     },
     performedBy: {

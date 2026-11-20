@@ -13,6 +13,10 @@ import {
   getTicketAuditLogs,
   exportTicketsToCsv,
 } from '../controllers/ticketController.js'
+import {
+  getTicketMessages,
+  sendTicketMessage,
+} from '../controllers/messageController.js'
 
 const router = express.Router()
 
@@ -39,6 +43,10 @@ router.get('/:id/audit-logs', protect, getTicketAuditLogs)
 
 // Export tickets matching filters to CSV (access filtered by user role inside controller)
 router.get('/export/csv', protect, exportTicketsToCsv)
+
+// Ticket chat messages (discussion thread)
+router.get('/:id/messages', protect, getTicketMessages)
+router.post('/:id/messages', protect, sendTicketMessage)
 
 // Get single ticket (access checked inside controller)
 router.get('/:id', protect, getTicketById)
