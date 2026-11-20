@@ -11,6 +11,7 @@ import {
   updateTicketStatus,
   getTicketById,
   getTicketAuditLogs,
+  exportTicketsToCsv,
 } from '../controllers/ticketController.js'
 
 const router = express.Router()
@@ -35,6 +36,9 @@ router.patch('/:id/status', protect, authorize('employee', 'admin'), updateTicke
 
 // Audit logs for a ticket (access checked in controller)
 router.get('/:id/audit-logs', protect, getTicketAuditLogs)
+
+// Export tickets matching filters to CSV (access filtered by user role inside controller)
+router.get('/export/csv', protect, exportTicketsToCsv)
 
 // Get single ticket (access checked inside controller)
 router.get('/:id', protect, getTicketById)

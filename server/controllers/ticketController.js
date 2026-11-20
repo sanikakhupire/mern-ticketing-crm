@@ -404,3 +404,82 @@ export const getTicketAuditLogs = async (req, res, next) => {
     next(error)
   }
 }
+
+// Helper for RFC 4180 CSV escaping
+const escapeCsv = (field) => {
+  if (field === null || field === undefined) return '""'
+  const stringValue = String(field).replace(/"/g, '""')
+  return `"${stringValue}"`
+}
+
+// @desc   Export tickets to CSV based on user role and query filters
+// @route  GET /api/tickets/export/csv
+// @access Private (admin, employee, customer)
+export const exportTicketsToCsv = async (req, res, next) => {
+  try {
+    let baseFilter = {}
+    if (req.user.role === 'customer') {
+      baseFilter = { customer: req.user._id }
+    } else if (req.user.role === 'employee') {
+      baseFilter = { assignedTo: req.user._id }
+    }
+
+    const filter = buildTicketFilter(req.query, baseFilter)
+
+    const tickets = await Ticket.find(filter)
+      .populate('customer', 'name email')
+      .populate('assignedTo', 'name email')
+      .sort({ createdAt: -1 })
+
+    const headers = [
+      'Ticket ID',
+      'Subject',
+      'Category',
+      'Priority',
+      'Status',
+      'Customer Name',
+      'Customer Email',
+      'Assigned Agent',
+      'Assigned Agent Email',
+      'SLA Deadline',
+      'SLA Breached',
+      'Escalated',
+      'Created At',
+      'Updated At',
+      'Description',
+    ]
+
+    const csvRows = [headers.map(escapeCsv).join(',')]
+
+    for (const ticket of tickets) {
+      const row = [
+        ticket._id ? ticket._id.toString() : '',
+        ticket.subject || '',
+        ticket.category || '',
+        ticket.priority || '',
+        ticket.status || '',
+        ticket.customer?.name || 'Unknown',
+        ticket.customer?.email || '',
+        ticket.assignedTo?.name || 'Unassigned',
+        ticket.assignedTo?.email || '',
+        ticket.slaDeadline ? new Date(ticket.slaDeadline).toISOString() : '',
+        ticket.slaBreached ? 'Yes' : 'No',
+        ticket.escalated ? 'Yes' : 'No',
+        ticket.createdAt ? new Date(ticket.createdAt).toISOString() : '',
+        ticket.updatedAt ? new Date(ticket.updatedAt).toISOString() : '',
+        ticket.description || '',
+      ]
+      csvRows.push(row.map(escapeCsv).join(','))
+    }
+
+    const csvContent = csvRows.join('\r\n')
+    const filename = `tickets-export-${new Date().toISOString().slice(0, 10)}.csv`
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.status(200).send(csvContent)
+  } catch (error) {
+    next(error)
+  }
+}
+

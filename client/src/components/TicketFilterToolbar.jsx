@@ -1,5 +1,6 @@
 import { Search, X, Filter, RotateCcw, Calendar } from 'lucide-react'
 import { useState } from 'react'
+import ExportCsvButton from './ExportCsvButton.jsx'
 
 const TicketFilterToolbar = ({
   search,
@@ -16,6 +17,7 @@ const TicketFilterToolbar = ({
   onDateToChange,
   onResetFilters,
   hideStatus = false,
+  showExport = true,
 }) => {
   const [showDateFilter, setShowDateFilter] = useState(Boolean(dateFrom || dateTo))
 
@@ -110,6 +112,14 @@ const TicketFilterToolbar = ({
             <Calendar size={14} />
             <span>Dates</span>
           </button>
+
+          {/* Export CSV Button */}
+          {showExport && (
+            <ExportCsvButton
+              size="sm"
+              filters={{ search, status, category, priority, dateFrom, dateTo }}
+            />
+          )}
 
           {/* Reset Filters Button */}
           {isFiltered && (
