@@ -5,6 +5,7 @@ import AuditLog from '../models/AuditLog.js'
 import { recordAuditLog } from '../utils/auditLogger.js'
 import { uploadToCloudinary } from '../config/cloudinary.js'
 import { emitNotification } from '../config/socket.js'
+import { analyzeTicketTriage } from '../utils/aiTriage.js'
 
 /**
  * Helper to construct MongoDB filter based on query parameters
@@ -83,6 +84,8 @@ export const createTicket = async (req, res, next) => {
       }
     }
 
+    const aiTriage = analyzeTicketTriage(subject, description)
+
     const ticket = await Ticket.create({
       subject,
       description,
@@ -90,6 +93,7 @@ export const createTicket = async (req, res, next) => {
       priority,
       imageUrl,
       customer: req.user._id,
+      aiTriage,
     })
 
     const populatedTicket = await ticket.populate('customer', 'name email')
@@ -482,4 +486,21 @@ export const exportTicketsToCsv = async (req, res, next) => {
     next(error)
   }
 }
+
+// @desc   Predict category, priority, and sentiment using AI triage
+// @route  POST /api/tickets/ai/triage
+// @access Private (authenticated user)
+export const predictTicketTriage = async (req, res, next) => {
+  try {
+    const { subject, description } = req.body
+    if (!subject && !description) {
+      return res.status(400).json({ message: 'Subject or description is required for AI triage' })
+    }
+    const triageResult = analyzeTicketTriage(subject || '', description || '')
+    res.status(200).json(triageResult)
+  } catch (error) {
+    next(error)
+  }
+}
+
 

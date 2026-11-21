@@ -16,6 +16,8 @@ import {
   User,
   History,
   MessageSquare,
+  Sparkles,
+  Loader2,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
@@ -25,6 +27,7 @@ import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.js
 import TicketChatModal from '../../components/TicketChatModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
+import AiTriageBadge from '../../components/AiTriageBadge.jsx'
 
 const ticketSchema = z.object({
   subject: z.string().min(5, 'Subject must be at least 5 characters'),
@@ -55,10 +58,15 @@ const CustomerDashboard = () => {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
 
+  const [triagePrediction, setTriagePrediction] = useState(null)
+  const [triageLoading, setTriageLoading] = useState(false)
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(ticketSchema),
@@ -69,6 +77,27 @@ const CustomerDashboard = () => {
       priority: 'Low',
     },
   })
+
+  const handleAutoTriage = async () => {
+    const s = watch('subject') || ''
+    const d = watch('description') || ''
+    if (!s.trim() && !d.trim()) {
+      toast.error('Please enter a subject or description first for AI triage')
+      return
+    }
+    try {
+      setTriageLoading(true)
+      const { data } = await api.post('/tickets/ai/triage', { subject: s, description: d })
+      setTriagePrediction(data)
+      setValue('category', data.category)
+      setValue('priority', data.priority)
+      toast.success(`AI suggested: ${data.category} • ${data.priority} Priority`)
+    } catch {
+      toast.error('Failed to analyze ticket with AI')
+    } finally {
+      setTriageLoading(false)
+    }
+  }
 
   const fetchMyTickets = useCallback(async () => {
     try {
@@ -144,6 +173,7 @@ const CustomerDashboard = () => {
       setTickets((prev) => [data, ...prev])
       reset()
       removeFile()
+      setTriagePrediction(null)
       setModalOpen(false)
       fetchMyTickets()
     } catch (err) {
@@ -286,6 +316,9 @@ const CustomerDashboard = () => {
                         )}
                       </span>
                     </div>
+
+                    {/* AI Triage Badge */}
+                    <AiTriageBadge triage={ticket.aiTriage} />
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
@@ -350,6 +383,7 @@ const CustomerDashboard = () => {
                 onClick={() => {
                   setModalOpen(false)
                   removeFile()
+                  setTriagePrediction(null)
                   reset()
                 }}
                 className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
@@ -428,6 +462,55 @@ const CustomerDashboard = () => {
                 )}
               </div>
 
+              {/* AI Smart Triage Assistant */}
+              <div className="p-3.5 rounded-xl border border-indigo-100 dark:border-indigo-900/60 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-900 dark:text-indigo-300">
+                    <Sparkles size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    <span>AI Smart Triage</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAutoTriage}
+                    disabled={triageLoading}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition cursor-pointer shadow-2xs"
+                  >
+                    {triageLoading ? (
+                      <>
+                        <Loader2 size={12} className="animate-spin" />
+                        <span>Analyzing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={12} />
+                        <span>Auto-Detect with AI</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {triagePrediction ? (
+                  <div className="text-xs text-slate-700 dark:text-slate-300 space-y-1 pt-1 border-t border-indigo-100 dark:border-indigo-900/40">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span>Suggested: <strong>{triagePrediction.category}</strong></span>
+                      <span>•</span>
+                      <span>Priority: <strong>{triagePrediction.priority}</strong></span>
+                      <span>•</span>
+                      <span>Sentiment: <strong className={triagePrediction.sentiment === 'Frustrated' ? 'text-rose-600' : 'text-slate-600'}>{triagePrediction.sentiment}</strong></span>
+                    </div>
+                    {triagePrediction.keySignals && triagePrediction.keySignals.length > 0 && (
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Keywords: {triagePrediction.keySignals.map((s) => `#${s}`).join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Fill in your subject and description above, then click Auto-Detect to automatically determine the right category and urgency.
+                  </p>
+                )}
+              </div>
+
               {/* Image Upload Area */}
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
@@ -483,6 +566,7 @@ const CustomerDashboard = () => {
                   onClick={() => {
                     setModalOpen(false)
                     removeFile()
+                    setTriagePrediction(null)
                     reset()
                   }}
                   className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition cursor-pointer"

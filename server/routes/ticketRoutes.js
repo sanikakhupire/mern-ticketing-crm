@@ -12,6 +12,7 @@ import {
   getTicketById,
   getTicketAuditLogs,
   exportTicketsToCsv,
+  predictTicketTriage,
 } from '../controllers/ticketController.js'
 import {
   getTicketMessages,
@@ -43,6 +44,9 @@ router.get('/:id/audit-logs', protect, getTicketAuditLogs)
 
 // Export tickets matching filters to CSV (access filtered by user role inside controller)
 router.get('/export/csv', protect, exportTicketsToCsv)
+
+// AI ticket triage suggestion (predict category, priority, sentiment)
+router.post('/ai/triage', protect, predictTicketTriage)
 
 // Ticket chat messages (discussion thread)
 router.get('/:id/messages', protect, getTicketMessages)

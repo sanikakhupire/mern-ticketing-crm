@@ -55,6 +55,19 @@ const ticketSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // AI Triage predictions and sentiment insights
+    aiTriage: {
+      category: { type: String, default: null },
+      priority: { type: String, default: null },
+      confidence: { type: Number, default: 0 },
+      sentiment: {
+        type: String,
+        enum: ['Positive', 'Neutral', 'Frustrated'],
+        default: 'Neutral',
+      },
+      keySignals: [{ type: String }],
+      summary: { type: String, default: '' },
+    },
   },
   { timestamps: true }
 )

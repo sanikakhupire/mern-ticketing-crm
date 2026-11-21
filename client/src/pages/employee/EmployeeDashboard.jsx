@@ -19,6 +19,7 @@ import TicketAuditHistoryModal from '../../components/TicketAuditHistoryModal.js
 import TicketChatModal from '../../components/TicketChatModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
+import AiTriageBadge from '../../components/AiTriageBadge.jsx'
 
 const EmployeeDashboard = () => {
   const [tickets, setTickets] = useState([])
@@ -249,6 +250,9 @@ const EmployeeDashboard = () => {
                         })}
                       </span>
                     </div>
+
+                    {/* AI Triage Badge */}
+                    <AiTriageBadge triage={ticket.aiTriage} />
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3 self-start lg:self-center">
