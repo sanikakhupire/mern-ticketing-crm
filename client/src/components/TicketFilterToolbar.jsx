@@ -1,4 +1,4 @@
-import { Search, X, Filter, RotateCcw, Calendar } from 'lucide-react'
+import { Search, X, RotateCcw, Calendar } from 'lucide-react'
 import { useState } from 'react'
 import ExportCsvButton from './ExportCsvButton.jsx'
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import toast from 'react-hot-toast'
 import {
   Users,
@@ -11,19 +10,11 @@ import {
   Mail,
   User,
   Lock,
-  ShieldCheck,
-  Calendar,
 } from 'lucide-react'
 import api from '../../services/api.js'
 import Navbar from '../../components/Navbar.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-
-const newUserSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['employee', 'admin']),
-})
+import { newUserSchema } from '../../utils/validators.js'
 
 const UserManagement = () => {
   const { user: currentUser } = useAuth()

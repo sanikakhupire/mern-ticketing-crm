@@ -60,7 +60,7 @@ export const SocketProvider = ({ children }) => {
       // Add to front of notifications list
       setNotifications((prev) => [newNotification, ...prev])
       // Trigger user-facing alert
-      toast((t) => (
+      toast(() => (
         <div className="flex flex-col gap-1">
           <p className="font-bold text-xs uppercase tracking-wider text-indigo-400">
             {newNotification.title}

@@ -7,7 +7,6 @@ import {
   User,
   Shield,
   Headphones,
-  CheckCircle2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../services/api.js'

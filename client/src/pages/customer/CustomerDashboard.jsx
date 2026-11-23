@@ -1,14 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import toast from 'react-hot-toast'
 import {
   Plus,
   Ticket,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
   Image as ImageIcon,
   X,
   Upload,
@@ -28,13 +24,7 @@ import TicketChatModal from '../../components/TicketChatModal.jsx'
 import TicketFilterToolbar from '../../components/TicketFilterToolbar.jsx'
 import Pagination from '../../components/Pagination.jsx'
 import AiTriageBadge from '../../components/AiTriageBadge.jsx'
-
-const ticketSchema = z.object({
-  subject: z.string().min(5, 'Subject must be at least 5 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  category: z.enum(['Support', 'Bug', 'Feature Request', 'Billing', 'Other']),
-  priority: z.enum(['Low', 'Medium', 'High']),
-})
+import { ticketSchema } from '../../utils/validators.js'
 
 const CustomerDashboard = () => {
   const [tickets, setTickets] = useState([])

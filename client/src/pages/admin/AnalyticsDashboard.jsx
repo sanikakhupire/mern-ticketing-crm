@@ -48,14 +48,6 @@ const AnalyticsDashboard = () => {
     fetchAnalytics()
   }, [])
 
-  const categoryColors = {
-    Support: '#6366f1',
-    Bug: '#ef4444',
-    'Feature Request': '#8b5cf6',
-    Billing: '#10b981',
-    Other: '#64748b',
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
       <Navbar />
