@@ -6,7 +6,20 @@ let io = null
 export const initSocket = (httpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: (origin, callback) => {
+        if (!origin) return callback(null, true)
+        if (
+          origin === process.env.CLIENT_URL ||
+          origin === 'http://localhost:5173' ||
+          origin === 'http://localhost:3000' ||
+          origin.endsWith('.vercel.app') ||
+          origin.endsWith('.netlify.app') ||
+          origin.endsWith('.onrender.com')
+        ) {
+          return callback(null, true)
+        }
+        return callback(null, true)
+      },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH'],
     },

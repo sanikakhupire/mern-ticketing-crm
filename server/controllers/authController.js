@@ -2,6 +2,22 @@ import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 import { generateAccessToken, generateRefreshToken } from '../utils/generateTokens.js'
 
+/**
+ * Cookie options:
+ * In production cross-site hosting (e.g. Vercel frontend + Render backend),
+ * sameSite MUST be 'none' and secure MUST be true for cookies to be sent cross-domain.
+ * In local development, sameSite 'lax' and secure false are used.
+ */
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production'
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  }
+}
+
 // @desc   Register a new user
 // @route  POST /api/auth/register
 export const registerUser = async (req, res) => {
@@ -32,12 +48,7 @@ export const registerUser = async (req, res) => {
     user.refreshToken = refreshToken
     await user.save()
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    })
+    res.cookie('refreshToken', refreshToken, getCookieOptions())
 
     res.status(201).json({
       accessToken,
@@ -79,12 +90,7 @@ export const loginUser = async (req, res) => {
     user.refreshToken = refreshToken
     await user.save()
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
+    res.cookie('refreshToken', refreshToken, getCookieOptions())
 
     res.status(200).json({
       accessToken,
@@ -114,7 +120,7 @@ export const logoutUser = async (req, res) => {
       }
     }
 
-    res.clearCookie('refreshToken')
+    res.clearCookie('refreshToken', getCookieOptions())
     res.status(200).json({ message: 'Logged out successfully' })
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message })
